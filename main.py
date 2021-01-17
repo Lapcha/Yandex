@@ -7,6 +7,33 @@ ALL_SPRITES = pygame.sprite.Group()
 clock = pygame.time.Clock()
 
 
+class Bullet:
+    def __init__(self):
+        self.pos_x, self.pos_y = 0, 0
+
+
+class Rocket:
+    def __init__(self):
+        self.speed = 20
+        self.skin = pygame.sprite.Sprite()
+        self.skin.image = pygame.image.load("sprites/RocketFix2.png").convert_alpha()
+        self.skin.rect = self.skin.image.get_rect()
+        self.skin.rect.x, self.skin.rect.y = pygame.mouse.get_pos()
+        self.skin.rect.x += 35
+        ALL_SPRITES.add(self.skin)
+
+
+class Boss:
+    def __init__(self):
+        self.hp = 1000
+        self.skin = pygame.sprite.Sprite()
+        self.skin.image = pygame.image.load("sprites/bossNBLast.png").convert_alpha()
+        self.skin.rect = self.skin.image.get_rect()
+        self.skin.rect.x = 580
+        self.skin.rect.y = 10
+        ALL_SPRITES.add(self.skin)
+
+
 class Player:
     def __init__(self):
         self.hp = 10
@@ -24,6 +51,9 @@ class Player:
         self.skin.rect.x -= 35
         self.skin.rect.y -= 34
 
+    def shot(self):
+        rocket = Rocket()
+        ALL_SPRITES.add(rocket.skin)
 
 
 def main():
@@ -38,6 +68,7 @@ def main():
     background.rect.y = 0
     ALL_SPRITES.add(background)
     player = Player()
+    boss = Boss()
 
     def pause():
         print("Пауза нажата")
