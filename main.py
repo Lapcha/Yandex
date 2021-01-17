@@ -5,6 +5,7 @@ FPS = 144
 COORD_LIMIT_y = 240
 ALL_SPRITES = pygame.sprite.Group()
 clock = pygame.time.Clock()
+ROCKETS_SPRITES = pygame.sprite.Group()
 
 
 class Bullet:
@@ -18,14 +19,13 @@ class Rocket:
         self.skin = pygame.sprite.Sprite()
         self.skin.image = pygame.image.load("sprites/RocketFix2.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
-        self.skin.rect.x, self.skin.rect.y = pygame.mouse.get_pos()
-        self.skin.rect.x += 35
-        ALL_SPRITES.add(self.skin)
+        self.skin.rect.center = pygame.mouse.get_pos()
+        self.skin.rect.y -= 30
 
 
 class Boss:
     def __init__(self):
-        self.hp = 1000
+        self.hp = 3000
         self.skin = pygame.sprite.Sprite()
         self.skin.image = pygame.image.load("sprites/bossNBLast.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
@@ -46,19 +46,17 @@ class Player:
         x, y = pygame.mouse.get_pos()
         if y < COORD_LIMIT_y:
             y = COORD_LIMIT_y
-        self.skin.rect.x, self.skin.rect.y = x, y
+        self.skin.rect.center = x, y
         # Корректировка координат, чтобы корабль находился в центре курсора
-        self.skin.rect.x -= 35
-        self.skin.rect.y -= 34
 
     def shot(self):
         rocket = Rocket()
-        ALL_SPRITES.add(rocket.skin)
+        ROCKETS_SPRITES.add(rocket.skin)
 
 
 def main():
     pygame.init()
-    pygame.mouse.set_visible(False)
+    pygame.mouse.set_visible(True)
     screen = pygame.display.set_mode(WINDOW_SIZE)
 
     background = pygame.sprite.Sprite()
@@ -74,6 +72,7 @@ def main():
         print("Пауза нажата")
 
     running = True
+    CD = 0  # Перезарядка выстрелов
     while running:
         screen.fill((0, 0, 0))
         for event in pygame.event.get():
@@ -82,10 +81,20 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     pause()
-                if event.key == pygame.K_q:
-                    player.shot()
+        CD += 1
+        if CD == 30:
+            player.shot()
+            CD = 0
         player.update_pos()  # Постоянное обновление позиции корабля
         ALL_SPRITES.draw(screen)  # Отрисовка спрайтов
+        for rocket in ROCKETS_SPRITES:
+            rocket.rect.y -= 7
+            if 580 <= rocket.rect.x <= 920 and rocket.rect.y <= 150:
+                print("BOOM")
+                rocket.kill()
+                boss.hp -= 10
+                print(boss.hp)
+        ROCKETS_SPRITES.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
     pygame.display.quit()
