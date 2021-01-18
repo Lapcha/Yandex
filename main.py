@@ -49,7 +49,7 @@ class Blast:
 
 class Boss:
     def __init__(self):
-        self.hp = 30
+        self.hp = 3000
         self.skin = pygame.sprite.Sprite()
         self.skin.image = pygame.image.load("sprites/bossNBLast.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
@@ -305,6 +305,7 @@ def main():
         boss_hp_label = font.render(f"Здоровье босса: {boss.hp}", True, (247, 37, 188))
         screen.blit(player_hp_label, (0, 0))
         screen.blit(boss_hp_label, (0, 60))
+
         pygame.display.flip()
         clock.tick(FPS)
         print(player.hp)
