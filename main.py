@@ -1,3 +1,5 @@
+import sys
+
 import pygame
 from random import randint
 
@@ -8,7 +10,7 @@ COORD_LIMIT_y = 240
 
 clock = pygame.time.Clock()
 
-ALL_SPRITES = pygame.sprite.Group()
+MAIN_SPRITES = pygame.sprite.Group()
 ROCKETS_SPRITES = pygame.sprite.Group()
 METEORS_SPRITES = pygame.sprite.Group()
 BLAST_SPRITES = pygame.sprite.Group()
@@ -21,9 +23,8 @@ class Bullet:
         self.skin = pygame.sprite.Sprite()
         self.skin.image = pygame.image.load("sprites/particles/dot.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
-        self.x = randint(530, 970)
-        self.y = 200
-        self.skin.rect.center = self.x, self.y
+        self.skin.rect.x = randint(530, 970)
+        self.skin.rect.y = 200
 
 
 class Meteor:
@@ -32,7 +33,8 @@ class Meteor:
         self.skin.image = pygame.image.load("sprites/particles/Fireball.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
         self.rand = randint(50, 1450)
-        self.skin.rect.center = self.rand, -170
+        self.skin.rect.x = self.rand
+        self.skin.rect.y = -170
 
 
 class Blast:
@@ -41,19 +43,20 @@ class Blast:
         self.skin.image = pygame.image.load("sprites/particles/blast.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
         self.rand = randint(50, 1450)
-        self.skin.rect.center = 750, 220
+        self.skin.rect.x = 740
+        self.skin.rect.y = 220
 
 
 class Boss:
     def __init__(self):
-        self.hp = 10
+        self.hp = 3000
         self.skin = pygame.sprite.Sprite()
         self.skin.image = pygame.image.load("sprites/bossNBLast.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
         self.skin.rect.x = 580
         self.skin.rect.y = 35
         self.alive = 1
-        ALL_SPRITES.add(self.skin)
+        MAIN_SPRITES.add(self.skin)
 
     def sky_fall(self):
         meteor = Meteor()
@@ -83,7 +86,8 @@ class Player:
         self.skin = pygame.sprite.Sprite()
         self.skin.image = pygame.image.load("sprites/ships/spaceship.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
-        ALL_SPRITES.add(self.skin)
+        self.alive = 1
+        MAIN_SPRITES.add(self.skin)
 
     def update_pos(self):  # Обновление позиции коробля по координатам мыши
         x, y = pygame.mouse.get_pos()
@@ -99,15 +103,18 @@ class Player:
 
 def main():
     pygame.init()
-    pygame.mouse.set_visible(True)
+    pygame.mouse.set_visible(False)
     screen = pygame.display.set_mode(WINDOW_SIZE)
+
+    pygame.display.set_icon(pygame.image.load("sprites/Logo.bmp"))
+    pygame.display.set_caption("SPACE BATTLE")
 
     background = pygame.sprite.Sprite()
     background.image = pygame.image.load("sprites/MainPage.png").convert_alpha()
     background.rect = background.image.get_rect()
     background.rect.x = 0
     background.rect.y = 0
-    ALL_SPRITES.add(background)
+    MAIN_SPRITES.add(background)
     player = Player()
     boss = Boss()
     frame = 0
@@ -119,25 +126,73 @@ def main():
                   pygame.image.load('sprites/death/death9.png'),
                   pygame.image.load('sprites/death/death10.png')]
 
-    def pause():
-        print("Пауза нажата")
+    def terminate():
+        pygame.quit()
+        sys.exit()
+
+    def show_information():
+        fon = pygame.transform.scale(pygame.image.load("sprites/Information.png"), (WINDOW_WIDTH, WINDOW_HEIGHT))
+        screen.blit(fon, (0, 0))
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_t:
+                        return  # Выходим из доп инфы
+            pygame.display.flip()
+
+    def start_screen():
+        fon = pygame.transform.scale(pygame.image.load("sprites/MainMenu.png"), (WINDOW_WIDTH, WINDOW_HEIGHT))
+        while True:
+            screen.blit(fon, (0, 0))
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_x:
+                        return  # начинаем игру
+                    elif event.key == pygame.K_y:
+                        show_information()
+            pygame.display.flip()
+
+    def end_game():
+        if boss.hp <= 10:
+            file = "sprites/WinPage.png"
+        else:
+            file = "sprites/LosePage.png"
+        fon = pygame.image.load(file)
+        while True:
+            screen.blit(fon, (530, 400))
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+            pygame.display.flip()
+            clock.tick(FPS)
 
     def death_boss_drow(frame):
-        for i in range(45):
+        for i in range(40):
             if frame + 1 >= 45:
                 frame = 0
             screen.blit(death_boss[frame // 5], (570, 0))
             frame += 1
             pygame.display.flip()
             clock.tick(30)
+        end_game()
 
+    def death_player_drow():
+        end_game()
 
+    def check_damage(x, y, object):
+        pass
+
+    start_screen()
     running = True
 
     CD = 0  # Перезарядка выстрелов
-    CDS = 0  # Перезарядка метеоров
-    CDL = 0  # Перезарядка ракет
-    CDB = 0  # Перезарядка пуль
+    CDS = -50  # Перезарядка метеоров
+    CDL = -125  # Перезарядка ракет
+    CDB = -50  # Перезарядка пуль
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -165,6 +220,7 @@ def main():
             CDB = 0
 
         player.update_pos()  # Постоянное обновление позиции корабля
+
         for rocket in ROCKETS_SPRITES:
             rocket.rect.y -= 7
             if 580 <= rocket.rect.x <= 920 and rocket.rect.y <= 230:
@@ -174,21 +230,42 @@ def main():
                 print(boss.hp)
 
         for meteor in METEORS_SPRITES:
+            x, y = pygame.mouse.get_pos()
+            x -= 4
+            y -= 12
             meteor.rect.y += 8
             if 1000 <= meteor.rect.y:
                 meteor.kill()
+            if check_damage(x, y, meteor):
+                meteor.kill()
 
         for launch in BLAST_SPRITES:
+            x, y = pygame.mouse.get_pos()
+            x -= 4
+            y -= 12
             launch.rect.y += 4
             if 1000 <= launch.rect.y:
                 launch.kill()
+            if check_damage(x, y, launch):
+                player.hp -= 1
+                launch.kill()
+        if player.hp <= 0 and player.alive== 1:
+            boss.skin.kill()
+            death_player_drow()
+            running = False
 
         for bullet in BULLETS_SPRITES:
+            x, y = pygame.mouse.get_pos()
+            x -= 4
+            y -= 12
             bullet.rect.y += 8
             if 1000 <= bullet.rect.y:
                 bullet.kill()
-
-        ALL_SPRITES.draw(screen)
+            if check_damage(x, y, bullet):
+                player.hp -= 1
+                bullet.kill()
+        # Отрисовка спрайтов 
+        MAIN_SPRITES.draw(screen)
         ROCKETS_SPRITES.draw(screen)
         METEORS_SPRITES.draw(screen)
         BLAST_SPRITES.draw(screen)
@@ -196,9 +273,10 @@ def main():
         if boss.hp <= 0 and boss.alive == 1:
             boss.skin.kill()
             death_boss_drow(frame)
-            boss.alive = 0
+            running = False
         pygame.display.flip()
         clock.tick(FPS)
+        print(player.hp)
     pygame.display.quit()
 
 
