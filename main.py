@@ -5,7 +5,7 @@ from random import randint
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1500, 900
 
-FPS = 144
+FPS = 30
 COORD_LIMIT_y = 240
 
 clock = pygame.time.Clock()
@@ -49,13 +49,12 @@ class Blast:
 
 class Boss:
     def __init__(self):
-        self.hp = 3000
+        self.hp = 30
         self.skin = pygame.sprite.Sprite()
         self.skin.image = pygame.image.load("sprites/bossNBLast.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
         self.skin.rect.x = 580
         self.skin.rect.y = 35
-        self.alive = 1
         MAIN_SPRITES.add(self.skin)
 
     def sky_fall(self):
@@ -86,7 +85,6 @@ class Player:
         self.skin = pygame.sprite.Sprite()
         self.skin.image = pygame.image.load("sprites/ships/spaceship.png").convert_alpha()
         self.skin.rect = self.skin.image.get_rect()
-        self.alive = 1
         MAIN_SPRITES.add(self.skin)
 
     def update_pos(self):  # Обновление позиции коробля по координатам мыши
@@ -109,6 +107,11 @@ def main():
     pygame.display.set_icon(pygame.image.load("sprites/Logo.bmp"))
     pygame.display.set_caption("SPACE BATTLE")
 
+    sound = pygame.mixer.Sound("Music.mp3")
+    sound.set_volume(0.1)
+    sound.play(-1)
+
+
     background = pygame.sprite.Sprite()
     background.image = pygame.image.load("sprites/MainPage.png").convert_alpha()
     background.rect = background.image.get_rect()
@@ -117,7 +120,6 @@ def main():
     MAIN_SPRITES.add(background)
     player = Player()
     boss = Boss()
-    frame = 0
     death_boss = [pygame.image.load('sprites/death/death2.png'),
                   pygame.image.load('sprites/death/death3.png'),
                   pygame.image.load('sprites/death/death4.png'), pygame.image.load('sprites/death/death5.png'),
@@ -125,6 +127,12 @@ def main():
                   pygame.image.load('sprites/death/death7.png'), pygame.image.load('sprites/death/death8.png'),
                   pygame.image.load('sprites/death/death9.png'),
                   pygame.image.load('sprites/death/death10.png')]
+
+    death_player = [pygame.image.load('sprites/P_death/death1.png'),
+                    pygame.image.load('sprites/P_death/death2.png'),
+                    pygame.image.load('sprites/P_death/death3.png'),
+                    pygame.image.load('sprites/P_death/death4.png')]
+
 
     def terminate():
         pygame.quit()
@@ -152,13 +160,15 @@ def main():
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_x:
                         return  # начинаем игру
+
                     elif event.key == pygame.K_y:
                         show_information()
             pygame.display.flip()
 
     def end_game():
+        running = False
         pygame.mouse.set_visible(True)
-        if boss.hp <= 10:
+        if boss.hp <= 0:
             file = "sprites/WinPage.png"
         else:
             file = "sprites/LosePage.png"
@@ -173,22 +183,24 @@ def main():
 
     def death_boss_drow(frame):
         for i in range(40):
-            if frame + 1 >= 45:
-                frame = 0
             screen.blit(death_boss[frame // 5], (570, 0))
             frame += 1
             pygame.display.flip()
             clock.tick(30)
         end_game()
 
-    def death_player_drow():
+    def death_player_drow(frame):
+        for i in range(20):
+            screen.blit(death_player[frame // 5], (player.skin.rect.x, player.skin.rect.y))
+            frame += 1
+            pygame.display.flip()
+            clock.tick(30)
         end_game()
 
     start_screen()
     running = True
-
     CD = 0  # Перезарядка выстрелов
-    CDS = -50  # Перезарядка метеоров
+    CDS = -200  # Перезарядка метеоров
     CDL = -125  # Перезарядка ракет
     CDB = -50  # Перезарядка пуль
     while running:
@@ -222,10 +234,8 @@ def main():
         for rocket in ROCKETS_SPRITES:
             rocket.rect.y -= 7
             if 580 <= rocket.rect.x <= 920 and rocket.rect.y <= 230:
-                print("BOOM")
                 rocket.kill()
                 boss.hp -= 10
-                print(boss.hp)
 
         for meteor in METEORS_SPRITES:
             x, y = pygame.mouse.get_pos()
@@ -242,8 +252,6 @@ def main():
                         player.hp -= 1
                         damage = 1
                         break
-            if player.hp <= 0:
-                death_player_drow()
             if 1000 <= meteor.rect.y:
                 meteor.kill()
 
@@ -251,31 +259,52 @@ def main():
             x, y = pygame.mouse.get_pos()
             x -= 4
             y -= 12
+            damage = 0
             launch.rect.y += 4
+            for x_pos in range(x, x + 11):
+                if damage:
+                    launch.kill()
+                    break
+                for y_pos in range(y, y + 11):
+                    if launch.rect.x <= x_pos <= launch.rect.x + 25 and launch.rect.y <= y_pos <= launch.rect.y + 140:
+                        player.hp -= 1
+                        damage = 1
+                        break
             if 1000 <= launch.rect.y:
                 launch.kill()
-        if player.hp <= 0 and player.alive== 1:
-            boss.skin.kill()
-            death_player_drow()
-            running = False
 
         for bullet in BULLETS_SPRITES:
             x, y = pygame.mouse.get_pos()
             x -= 4
             y -= 12
+            damage = 0
             bullet.rect.y += 8
+            for x_pos in range(x, x + 11):
+                if damage:
+                    bullet.kill()
+                    break
+                for y_pos in range(y, y + 11):
+                    if bullet.rect.x <= x_pos <= bullet.rect.x + 35 and bullet.rect.y <= y_pos <= bullet.rect.y + 35:
+                        player.hp -= 1
+                        damage = 1
+                        break
             if 1000 <= bullet.rect.y:
                 bullet.kill()
-        # Отрисовка спрайтов 
+        if player.hp <= 0:
+            death_player_drow(0)
+        if boss.hp <= 0:
+            death_boss_drow(0)
+        # Отрисовка спрайтов
         MAIN_SPRITES.draw(screen)
         ROCKETS_SPRITES.draw(screen)
         METEORS_SPRITES.draw(screen)
         BLAST_SPRITES.draw(screen)
         BULLETS_SPRITES.draw(screen)
-        if boss.hp <= 0 and boss.alive == 1:
-            boss.skin.kill()
-            death_boss_drow(frame)
-            running = False
+        font = pygame.font.Font(None, 50)
+        player_hp_label = font.render(f"Здоровье игрока: {player.hp}", True, (247, 37, 188))
+        boss_hp_label = font.render(f"Здоровье босса: {boss.hp}", True, (247, 37, 188))
+        screen.blit(player_hp_label, (0, 0))
+        screen.blit(boss_hp_label, (0, 60))
         pygame.display.flip()
         clock.tick(FPS)
         print(player.hp)
