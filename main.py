@@ -157,6 +157,7 @@ def main():
             pygame.display.flip()
 
     def end_game():
+        pygame.mouse.set_visible(True)
         if boss.hp <= 10:
             file = "sprites/WinPage.png"
         else:
@@ -182,9 +183,6 @@ def main():
 
     def death_player_drow():
         end_game()
-
-    def check_damage(x, y, object):
-        pass
 
     start_screen()
     running = True
@@ -233,10 +231,20 @@ def main():
             x, y = pygame.mouse.get_pos()
             x -= 4
             y -= 12
+            damage = 0
             meteor.rect.y += 8
+            for x_pos in range(x, x + 11):
+                if damage:
+                    meteor.kill()
+                    break
+                for y_pos in range(y, y + 11):
+                    if meteor.rect.x + 1 <= x_pos <= meteor.rect.x + 74 and meteor.rect.y - 115 <= y_pos <= meteor.rect.y + 170:
+                        player.hp -= 1
+                        damage = 1
+                        break
+            if player.hp <= 0:
+                death_player_drow()
             if 1000 <= meteor.rect.y:
-                meteor.kill()
-            if check_damage(x, y, meteor):
                 meteor.kill()
 
         for launch in BLAST_SPRITES:
@@ -245,9 +253,6 @@ def main():
             y -= 12
             launch.rect.y += 4
             if 1000 <= launch.rect.y:
-                launch.kill()
-            if check_damage(x, y, launch):
-                player.hp -= 1
                 launch.kill()
         if player.hp <= 0 and player.alive== 1:
             boss.skin.kill()
@@ -260,9 +265,6 @@ def main():
             y -= 12
             bullet.rect.y += 8
             if 1000 <= bullet.rect.y:
-                bullet.kill()
-            if check_damage(x, y, bullet):
-                player.hp -= 1
                 bullet.kill()
         # Отрисовка спрайтов 
         MAIN_SPRITES.draw(screen)
