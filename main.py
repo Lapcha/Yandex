@@ -251,19 +251,39 @@ def main():
             x, y = pygame.mouse.get_pos()
             x -= 4
             y -= 12
+            damage = 0
             launch.rect.y += 4
+            for x_pos in range(x, x + 11):
+                if damage:
+                    launch.kill()
+                    break
+                for y_pos in range(y, y + 11):
+                    if launch.rect.x <= x_pos <= launch.rect.x + 25 and launch.rect.y <= y_pos <= launch.rect.y + 140:
+                        player.hp -= 1
+                        damage = 1
+                        break
+            if player.hp <= 0:
+                death_player_drow()
             if 1000 <= launch.rect.y:
                 launch.kill()
-        if player.hp <= 0 and player.alive== 1:
-            boss.skin.kill()
-            death_player_drow()
-            running = False
 
         for bullet in BULLETS_SPRITES:
             x, y = pygame.mouse.get_pos()
             x -= 4
             y -= 12
-            bullet.rect.y += 8
+            damage = 0
+            bullet.rect.y += 7
+            for x_pos in range(x, x + 11):
+                if damage:
+                    bullet.kill()
+                    break
+                for y_pos in range(y, y + 11):
+                    if bullet.rect.x <= x_pos <= bullet.rect.x + 35 and bullet.rect.y <= y_pos <= bullet.rect.y + 35:
+                        player.hp -= 1
+                        damage = 1
+                        break
+            if player.hp <= 0:
+                death_player_drow()
             if 1000 <= bullet.rect.y:
                 bullet.kill()
         # Отрисовка спрайтов 
