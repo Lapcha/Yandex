@@ -5,7 +5,7 @@ from random import randint
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1500, 900
 
-FPS = 30
+FPS = 120
 COORD_LIMIT_y = 240
 
 clock = pygame.time.Clock()
@@ -248,7 +248,7 @@ def main():
                     meteor.kill()
                     break
                 for y_pos in range(y, y + 11):
-                    if meteor.rect.x + 1 <= x_pos <= meteor.rect.x + 74 and meteor.rect.y - 115 <= y_pos <= meteor.rect.y + 170:
+                    if meteor.rect.x + 1 <= x_pos <= meteor.rect.x + 74 and meteor.rect.y + 115 <= y_pos <= meteor.rect.y + 170:
                         player.hp -= 1
                         damage = 1
                         break
@@ -290,10 +290,6 @@ def main():
                         break
             if 1000 <= bullet.rect.y:
                 bullet.kill()
-        if player.hp <= 0:
-            death_player_drow(0)
-        if boss.hp <= 0:
-            death_boss_drow(0)
         # Отрисовка спрайтов
         MAIN_SPRITES.draw(screen)
         ROCKETS_SPRITES.draw(screen)
@@ -301,11 +297,14 @@ def main():
         BLAST_SPRITES.draw(screen)
         BULLETS_SPRITES.draw(screen)
         font = pygame.font.Font(None, 50)
-        player_hp_label = font.render(f"Здоровье игрока: {player.hp}", True, (247, 37, 188))
-        boss_hp_label = font.render(f"Здоровье босса: {boss.hp}", True, (247, 37, 188))
+        player_hp_label = font.render(f"Здоровье игрока: {player.hp}", True, (255, 255, 255))
+        boss_hp_label = font.render(f"Здоровье босса: {boss.hp}", True, (255, 255, 255))
         screen.blit(player_hp_label, (0, 0))
         screen.blit(boss_hp_label, (0, 60))
-
+        if player.hp <= 0:
+            death_player_drow(0)
+        if boss.hp <= 0:
+            death_boss_drow(0)
         pygame.display.flip()
         clock.tick(FPS)
         print(player.hp)
